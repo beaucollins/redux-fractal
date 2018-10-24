@@ -82,6 +82,8 @@ test('mapped fractal', () => {
     expect(fractal.selectors.isA({ internal: 'a'})).toBe(true);
     expect(fractal.selectors.blerg({ internal: 'a' }, 'a')).toBe(true);
 
+    expect(fractal.reducer(undefined, { type: 'other' })).toEqual('a');
+
     expect(fractal.actions.one()).toEqual({ action: 'one', type: 'external' });
     expect(fractal.actions.two()).toEqual({ action: 'two', type: 'external' });
     expect(fractal.actions.item('a')).toEqual({ action: 'a', type: 'external' });
