@@ -40,7 +40,7 @@ jobs:
 
       - run:
           name: Unit Tests
-          command: npm -s test
+          command: npm -s test -- --reporters="jest-junit" --reporters="default"
           environment:
             JEST_JUNIT_OUTPUT: test-results/jest/junit.xml
 
