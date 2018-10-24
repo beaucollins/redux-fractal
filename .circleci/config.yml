@@ -40,12 +40,15 @@ jobs:
 
       - run:
           name: Unit Tests
-          command: npm -s test -- --reporters="jest-junit" --reporters="default"
+          command: npm -s test -- --reporters="jest-junit" --reporters="default" --coverage
           environment:
             JEST_JUNIT_OUTPUT: test-results/jest/junit.xml
 
       - store_test_results:
           path: test-results
+
+      - store_artifacts:
+          path: coverage
 
 
 
