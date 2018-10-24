@@ -34,8 +34,18 @@ jobs:
           key: v1-dependencies-{{ checksum "package.json" }}
         
       # run tests!
-      - run: npm run -s flow
-      - run: npm -s test
+      - run:
+          name: Flow Type Check
+          command: npm run -s flow
+
+      - run:
+          name: Unit Tests
+          command: npm -s test
+          environment:
+            JEST_JUNIT_OUTPUT: test-results/jest/junit.xml
+
+      - store_test_results:
+          path: test-results
 
 
 
