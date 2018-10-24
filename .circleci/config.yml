@@ -39,6 +39,10 @@ jobs:
           command: npm run -s flow
 
       - run:
+          name: Flow Coverage
+          command: npm run -s flow:coverage
+
+      - run:
           name: Unit Tests
           command: npm -s test -- --reporters="jest-junit" --reporters="default" --coverage
           environment:
@@ -50,5 +54,6 @@ jobs:
       - store_artifacts:
           path: coverage
 
-
+      - store_artifacts:
+          path: flow-coverage
 
