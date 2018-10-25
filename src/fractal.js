@@ -1,59 +1,66 @@
 /**
  * @flow
  */
-
-export function add<T: (string | number)>(a: T, b: T): T {
-    return a + b;
-}
-
 export type Reducer<S, A> = (S | void, A) => S;
 
 export type Selector<S, O, R> = (S, O) => R;
 type ActionCreator<A, O> = (O) => A;
 
-type MapSelector<X> = <S, O, R>(Selector<S, O, R>) => Selector<X, O, R>;
-type MapAction<X> = <O, A>(ActionCreator<A, O>) => ActionCreator<X, O>;
-
-export type Fractal<S, A, X, E, SE: SelectorSet<S>, AE: ActionSet<A>> = {|
-    selectors: $ObjMap<SE, MapSelector<X>>,
-    actions: $ObjMap<AE, MapAction<E>>,
-    reducer: Reducer<S, E>,
-    select: (X) => S
-|}
-
-type Integration<S, A, X, E> = {|
-    getState: (X) => S,
-    detectAction: (E) => ?A,
-    createAction: (A) => E,
-|};
-
-type SelectorSet<T> = {
+type Selectors<T> = {
     [selector: string]: Selector<T, *, *>
 };
 
-type ActionSet<A> = {
+type ActionCreators<A> = {
     [action: string]: ActionCreator<A, *>
 };
 
-export function createFractal<S, A, X, E, SE: SelectorSet<S>, AE: ActionSet<A>>(
-    defaultState: S,
+/*
+ * Not used at the moment
+ *   type MapSelector<X> = <S, O, R>(Selector<S, O, R>) => Selector<X, O, R>;
+ *   type MapAction<X> = <O, A>(ActionCreator<A, O>) => ActionCreator<X, O>;
+ */
+
+export type Fractal<S, A, E, SE: Selectors<E>, AC: ActionCreators<A>> = {|
+    select: SE,
+    actions: AC,
+    reducer: Reducer<S, A>,
+|}
+
+type Integration<S, A, FS, FA> = {|
+    getState: (S) => FS,
+    detectAction: (A) => ?FA,
+    createAction: (FA) => A,
+|};
+
+export function createFractal<S, A, SE: Selectors<S>, AC: ActionCreators<A>>(
     reducer: Reducer<S, A>,
     selectors: SE,
-    actions: AE,
-    api: Integration<S, A, X, E>,
-): Fractal<S, A, X, E, SE, AE> {
+    actions: AC
+): Fractal<S, A, S, SE, AC> {
     return {
-        selectors: Object.keys(selectors).reduce((mapped, key) => Object.assign(mapped, {
-            [key]: (state, options) => selectors[key](api.getState(state), options)
+        select: selectors,
+        actions,
+        reducer,
+    };
+}
+
+
+export function mapFractal<S, A, FS, FA>(
+    defaultState: FS,
+    fractal: Fractal<FS, FA, FS, Selectors<FS>, ActionCreators<FA>>,
+    api: Integration<S, A, FS, FA>,
+): Fractal<FS, A, S, Selectors<S>, ActionCreators<A>> {
+    return {
+        select: Object.keys(fractal.select).reduce((mapped, key) => Object.assign(mapped, {
+            [key]: (state, options) => fractal.select[key](api.getState(state), options)
         }), {}),
-        actions: Object.keys(actions).reduce((mapped, key) => Object.assign(mapped, {
-            [key]: (options) => api.createAction(actions[key](options))
+        actions: Object.keys(fractal.actions).reduce((mapped, key) => Object.assign(mapped, {
+            [key]: (options) => api.createAction(fractal.actions[key](options))
         }), {}),
-        select: api.getState,
         reducer: (state = defaultState, external) => {
             const action = api.detectAction(external);
             if (action) {
-                return reducer(state, action);
+                return fractal.reducer(state, action);
             }
             return state;
         },
